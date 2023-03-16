@@ -1,0 +1,39 @@
+import sqlite3
+
+
+class Database:
+    def __init__(self, path):
+        self.__con = sqlite3.connect(path)
+        self.__cur = self.__con.cursor()
+        self.__manage()
+
+    def __manage(self):
+        self.__cur.execute("CREATE TABLE IF NOT EXISTS reservations ("
+                           "pname VARCHAR, "
+                           "start_time TEXT, "
+                           "end_time TEXT, "
+                           "PRIMARY KEY(pname, start_time, end_time));")
+
+    def count_reservations(self, name):
+        self.__cur.execute('SELECT COUNT(*) FROM reservations '
+                           f'WHERE pname = "{name}" '
+                           'GROUP BY pname')
+        result = self.__cur.fetchall()
+        return result[0][0] if result != [] else 0
+
+    def gather_reservations_dates(self):
+        self.__cur.execute('SELECT start_time, end_time FROM reservations')
+        return self.__cur.fetchall()
+
+    def insert(self, name, start_date, end_date):
+        self.__cur.execute("INSERT INTO reservations (pname, start_time, end_time) "
+                           f'VALUES ("{name}", "{start_date}", "{end_date}")')
+        self.__con.commit()
+
+    def printAll(self):
+        self.__cur.execute('SELECT * FROM reservations ')
+        print(self.__cur.fetchall())
+
+    def quit(self):
+        self.__con.commit()
+        self.__con.close()
