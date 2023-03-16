@@ -55,6 +55,16 @@ class Menu:
                 print(f"User has more than {Macros.max_reservations_num} reservations already this week")
             case AlertType.InvalidDate:
                 print("Entered invalid date format, it should be {DD.MM.YYYY HH:MM}")
+            case AlertType.DayFull:
+                print("Given day is full, enter new date")
+            case AlertType.DateFromThePast:
+                print(f"Entered past date, please select some in interval at {float(Macros.minute_delay/60)} hour{'s' if Macros.minute_delay/60 > 1 else ''}")
+            case AlertType.DateTooClose:
+                print(f"Entered too close date, please select some in interval at least {float(Macros.minute_delay/60)} hour{'s' if Macros.minute_delay/60 > 1 else ''}")
+            case AlertType.NotANumber:
+                print("Please enter a number")
+            case AlertType.NumberOutOfRange:
+                print("Number out of range")
         time.sleep(3)
 
     @staticmethod
@@ -73,6 +83,6 @@ class Menu:
     def gather_duration(periods):
         Macros.clear_screen()
         print("How long would you like to book court?")
-        for i in range(1,periods):
-            print(f"{i}) {i*Macros.intervals} minutes")
+        for i in range(1,periods+1):
+            print(f"{i}) {i*Macros.minute_interval} minutes")
         return input()
