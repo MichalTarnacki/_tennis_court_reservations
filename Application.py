@@ -1,4 +1,6 @@
-
+from Menu import Menu
+from MenuOption import MenuOption
+import re
 class Application:
     def __init__(self):
         self.__loop()
@@ -18,7 +20,14 @@ class Application:
                     self.__exit()
                     break
 
+    @staticmethod
+    def __validate_name(name):
+        return re.compile("^([A-Z]+)+$").match(name)
+
     def __make_reservation(self):
+        while True:
+            Menu.gather_data()
+            if
         pass
 
     def __cancel_reservation(self):
