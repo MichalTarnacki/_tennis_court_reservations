@@ -5,7 +5,7 @@ import Macros
 from AlertType import AlertType
 from Database import Database
 from Menu import Menu
-from MenuOption import MenuOption
+from ActionOption import ActionOption
 from DataType import DataType
 import re
 
@@ -18,15 +18,15 @@ class Application:
     def __loop(self):
         while True:
             match Menu.main_menu():
-                case MenuOption.Make:
+                case ActionOption.Make:
                     self.__make_reservation()
-                case MenuOption.Cancel:
+                case ActionOption.Cancel:
                     self.__cancel_reservation()
-                case MenuOption.Print:
+                case ActionOption.Print:
                     self.__print_schedule()
-                case MenuOption.Save:
+                case ActionOption.Save:
                     self.__save_schedule()
-                case MenuOption.Exit:
+                case ActionOption.Exit:
                     self.__exit()
                     break
 
@@ -79,48 +79,61 @@ class Application:
             date = date + timedelta(minutes=Macros.minute_interval)
         return None
 
-    def __get_name(self):
+    def __get_name(self, option):
         while True:  # Gather and valid name
             name = Menu.gather_data(DataType.Name)
-            if self.__validate_name(name):
+            if name in Macros.exit:
+                return False
+            elif self.__validate_name(name):
                 break
             else:
                 Menu.alert(AlertType.InvalidName)
-        if not self.__validate_number_of_reservations(name):
-            Menu.alert(AlertType.InvalidNumberOfReservation)
-            return False
+        if option == ActionOption.Make:
+            if not self.__validate_number_of_reservations(name):
+                Menu.alert(AlertType.InvalidNumberOfReservation)
+                return False
         return name
 
-    def __get_date(self):
+    def __get_date(self, option):
         while True:  # Gather and valid data
-            date = Menu.gather_data(DataType.Date)
-            if self.__validate_date(date):
+            date = Menu.gather_data(DataType.Date if option == ActionOption.Make else DataType.DateCancel)
+            if date in Macros.exit:
+                return False
+            elif self.__validate_date(date):
                 date = datetime.strptime(date, Macros.date_format)
                 if date < datetime.now():
                     Menu.alert(AlertType.DateFromThePast)
-                elif date < datetime.now() + timedelta(minutes=Macros.minute_delay):
-                    Menu.alert(AlertType.DateTooClose)
-                elif self.__check_if_date_is_available(date):
-                    break
-                else:
-                    date = self.__find_new_hour(date)
-                    if date is not None:
-                        hour = datetime.strftime(date, '%H:%M')
-                        while True:
-                            response = Menu.unavailable_date(hour)
-                            if response is not None:
-                                break
-                        if response:
-                            break
+                elif option == ActionOption.Make:
+                    if date < datetime.now() + timedelta(minutes=Macros.minute_delay):
+                        Menu.alert(AlertType.DateTooClose)
+                    elif self.__check_if_date_is_available(date):
+                        break
                     else:
-                        Menu.alert(AlertType.DayFull)
+                        date = self.__find_new_hour(date)
+                        if date is not None:
+                            hour = datetime.strftime(date, '%H:%M')
+                            while True:
+                                response = Menu.unavailable_date(hour)
+                                if response is not None:
+                                    break
+                            if response:
+                                break
+                        else:
+                            Menu.alert(AlertType.DayFull)
+                else:
+                    if date < datetime.now() + timedelta(minutes=Macros.minute_delay):
+                        Menu.alert(AlertType.DateTooCloseToCancel)
+                        return False
+                    else:
+                        break
+
             else:
                 Menu.alert(AlertType.InvalidDate)
         return date
 
     def __find_available_periods(self, date):
         available_periods = 1
-        for i in (1, Macros.max_periods + 1):
+        for i in (0, Macros.max_periods):
             if self.__check_if_date_is_available(date + timedelta(minutes=Macros.minute_interval * i)):
                 available_periods += 1
             else:
@@ -131,9 +144,14 @@ class Application:
         periods = self.__find_available_periods(date)
         while True:  # Gather and valid duration
             try:
-                response = int(Menu.gather_duration(periods))
+                response = Menu.gather_duration(periods)
+                if response in Macros.exit:
+                    return False
+                response = int(response)
                 if 1 <= response <= periods:
                     return response
+                elif response in [i*Macros.minute_interval for i in range(1, Macros.max_periods+1)]:
+                    return response/Macros.minute_interval
                 else:
                     Menu.alert(AlertType.NumberOutOfRange)
             except (Exception,):
@@ -141,23 +159,45 @@ class Application:
 
     # TODO Ask if reservation should be on intervals
     def __make_reservation(self):
-        name = self.__get_name()
+        name = self.__get_name(ActionOption.Make)
         if not name:
             return
-        date = self.__get_date()
+        date = self.__get_date(ActionOption.Make)
+        if not date:
+            return
         duration = self.__get_duration(date)
+        if not duration:
+            return
         start_date = datetime.strftime(date, Macros.date_format)
         end_date = datetime.strftime(date + timedelta(minutes=duration * Macros.minute_interval), Macros.date_format)
         self.__db.insert(name, start_date, end_date)
+        Menu.success_message(name, date.strftime(Macros.date_format), int(duration*Macros.minute_interval))
 
     def __cancel_reservation(self):
-        self.__db.insert("jan blachowicz", "31.01.2002 18:30", "31.01.2002 19:00")
-        self.__db.insert("jan blachowicz", "31.01.2002 19:00", "31.01.2002 19:30")
-        self.__db.insert("jan blachowicz", "31.01.2002 19:30", "31.01.2002 20:00")
-        pass
+        name = self.__get_name(ActionOption.Cancel)
+        if not name:
+            return
+        while True:
+            date = self.__get_date(ActionOption.Cancel)
+            if not date:
+                return
+            date = date.strftime(Macros.date_format)
+            if self.__db.check_if_reservation_exists(name, date):
+                self.__db.cancel_reservation(name, date)
+                Menu.alert(AlertType.CancelSuccessful)
+                return
+            else:
+                while True:
+                    result = Menu.reservation_not_exist()
+                    if result is not None:
+                        if result:
+                            break
+                        else:
+                            return
 
     def __print_schedule(self):
         self.__db.printAll()
+        time.sleep(3)
         pass
 
     def __save_schedule(self):

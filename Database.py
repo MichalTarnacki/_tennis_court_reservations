@@ -37,3 +37,14 @@ class Database:
     def quit(self):
         self.__con.commit()
         self.__con.close()
+
+    def check_if_reservation_exists(self, name, date):
+        self.__cur.execute('SELECT * FROM reservations '
+                           f'WHERE pname = "{name}" and start_time = "{date}"')
+        result = self.__cur.fetchall()
+        return True if result != [] else False
+
+    def cancel_reservation(self, name, date):
+        self.__cur.execute('DELETE FROM reservations '
+                           f'WHERE pname = "{name}" and start_time = "{date}"')
+        self.__con.commit()

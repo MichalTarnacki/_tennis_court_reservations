@@ -1,6 +1,7 @@
 from enum import Enum
 
-class MenuOption(Enum):
+
+class ActionOption(Enum):
     Make = 1
     Cancel = 2
     Print = 3

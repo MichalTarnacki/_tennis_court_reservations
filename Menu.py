@@ -2,7 +2,7 @@ import Macros
 import time
 
 from AlertType import AlertType
-from MenuOption import MenuOption
+from ActionOption import ActionOption
 from DataType import DataType
 
 
@@ -21,15 +21,15 @@ class Menu:
               "5.Exit", sep='\n')
         match input():
             case "1" | "Make a reservation":
-                return MenuOption.Make
+                return ActionOption.Make
             case "2" | "Cancel a reservation":
-                return MenuOption.Cancel
+                return ActionOption.Cancel
             case "3" | "Print schedule":
-                return MenuOption.Print
+                return ActionOption.Print
             case "4" | "Save schedule to a file":
-                return MenuOption.Save
+                return ActionOption.Save
             case "5" | "Exit":
-                return MenuOption.Exit
+                return ActionOption.Exit
         return None
 
     @staticmethod
@@ -39,9 +39,9 @@ class Menu:
             case DataType.Name:
                 print("What's your Name?")
             case DataType.Date:
-                print("When would you like to book? {DD.MM.YYYY HH:MM}1")
-            case DataType.Duration:
-                pass
+                print("When would you like to book? {DD.MM.YYYY HH:MM}")
+            case DataType.DateCancel:
+                print("When is your reservation? {DD.MM.YYYY HH:MM}")
         return input()
 
     @staticmethod
@@ -65,6 +65,11 @@ class Menu:
                 print("Please enter a number")
             case AlertType.NumberOutOfRange:
                 print("Number out of range")
+            case AlertType.DateTooCloseToCancel:
+                print("Cannot cancel reservation, date too close")
+            case AlertType.CancelSuccessful:
+                print("Successfully canceled")
+
         time.sleep(3)
 
     @staticmethod
@@ -86,3 +91,20 @@ class Menu:
         for i in range(1,periods+1):
             print(f"{i}) {i*Macros.minute_interval} minutes")
         return input()
+
+    @staticmethod
+    def success_message(name, date, period):
+        Macros.clear_screen()
+        print(f"Reservation successful: {name}, {date}, {period} minutes")
+        time.sleep(3)
+
+    @staticmethod
+    def reservation_not_exist():
+        Macros.clear_screen()
+        print("Reservation doesnt exist, continue? (yes/no)")
+        match input():
+            case 'yes':
+                return True
+            case 'no':
+                return False
+        return None

@@ -1,6 +1,10 @@
 import os
 
-clear_screen = lambda: os.system('cls' if os.name == 'nt' else 'clear')
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+
 max_reservations_num = 2
 database_path = "/Users/michal/Documents/sample.db"
 date_format = '%d.%m.%Y %H:%M'
@@ -10,3 +14,4 @@ start_hour = '9:30'
 end_hour = '18:00'
 time_format = '%H:%M'
 minute_delay = 60
+exit = ["exit", "Exit"]
