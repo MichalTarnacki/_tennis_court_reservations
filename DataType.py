@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class DataType(Enum):
+    DaysToPrint = 6
     Continue = 5
     Name = 1
     Date = 2

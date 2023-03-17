@@ -7,7 +7,8 @@ def clear_screen():
 
 max_reservations_num = 2
 database_path = "/Users/michal/Documents/sample.db"
-date_format = '%d.%m.%Y %H:%M'
+datetime_format = '%d.%m.%Y %H:%M'
+date_format = '%d.%m.%Y'
 max_periods = 3
 minute_interval = 30
 start_hour = '9:30'

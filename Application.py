@@ -35,9 +35,12 @@ class Application:
         return True if re.compile('^([A-Za-z]+\\s[A-Za-z]+)$').match(name) is not None else False
 
     @staticmethod
+    def __validate_two_dates(date_string):
+        return True if re.compile('^([0-9.]+\\s[0-9.]+)$').match(date_string) is not None else False
+    @staticmethod
     def __validate_date(date):
         try:
-            datetime.strptime(date, Macros.date_format)
+            datetime.strptime(date, Macros.datetime_format)
             return True
         except (Exception,):
             pass
@@ -58,9 +61,9 @@ class Application:
             return
 
         for i in dates:
-            if datetime.strptime(i[0], Macros.date_format) <= date < datetime.strptime(i[1], Macros.date_format) \
-                    or datetime.strptime(i[0], Macros.date_format) < date + timedelta(minutes=Macros.minute_interval) \
-                    < datetime.strptime(i[1], Macros.date_format):
+            if datetime.strptime(i[0], Macros.datetime_format) <= date < datetime.strptime(i[1], Macros.datetime_format) \
+                    or datetime.strptime(i[0], Macros.datetime_format) < date + timedelta(minutes=Macros.minute_interval) \
+                    < datetime.strptime(i[1], Macros.datetime_format):
                 return False
         return True
 
@@ -100,7 +103,7 @@ class Application:
             if date in Macros.exit:
                 return False
             elif self.__validate_date(date):
-                date = datetime.strptime(date, Macros.date_format)
+                date = datetime.strptime(date, Macros.datetime_format)
                 if date < datetime.now():
                     Menu.alert(AlertType.DateFromThePast)
                 elif option == ActionOption.Make:
@@ -168,10 +171,10 @@ class Application:
         duration = self.__get_duration(date)
         if not duration:
             return
-        start_date = datetime.strftime(date, Macros.date_format)
-        end_date = datetime.strftime(date + timedelta(minutes=duration * Macros.minute_interval), Macros.date_format)
+        start_date = datetime.strftime(date, Macros.datetime_format)
+        end_date = datetime.strftime(date + timedelta(minutes=duration * Macros.minute_interval), Macros.datetime_format)
         self.__db.insert(name, start_date, end_date)
-        Menu.success_message(name, date.strftime(Macros.date_format), int(duration*Macros.minute_interval))
+        Menu.success_message(name, date.strftime(Macros.datetime_format), int(duration * Macros.minute_interval))
 
     def __cancel_reservation(self):
         name = self.__get_name(ActionOption.Cancel)
@@ -181,7 +184,7 @@ class Application:
             date = self.__get_date(ActionOption.Cancel)
             if not date:
                 return
-            date = date.strftime(Macros.date_format)
+            date = date.strftime(Macros.datetime_format)
             if self.__db.check_if_reservation_exists(name, date):
                 self.__db.cancel_reservation(name, date)
                 Menu.alert(AlertType.CancelSuccessful)
@@ -196,12 +199,40 @@ class Application:
                             return
 
     def __print_schedule(self):
+        while True:
+            next_days = Menu.gather_data(DataType.DaysToPrint)
+            if self.__validate_two_dates(next_days):
+                start_date, end_date = next_days.split(" ")
+                try:
+                    start_date = datetime.strptime(start_date, Macros.date_format)
+                    end_date = datetime.strptime(end_date, Macros.date_format)
+                    break
+                except (Exception,):
+                    Menu.alert(AlertType.InvalidDateShort)
+            else:
+                Menu.alert(AlertType.InvalidDateShort)
+        print(self.__str__(start_date, end_date))
+
+    def __save_schedule(self):
         self.__db.printAll()
         time.sleep(3)
         pass
 
-    def __save_schedule(self):
-        pass
-
     def __exit(self):
         pass
+
+    def __str__(self, start_date=datetime.now(), end_date=datetime.now() + timedelta(days=3)):
+        to_print = ""
+        reservations = self.__db.fetch_all()
+
+        while True:
+            if start_date == datetime.now():
+                to_print += "Today:\n"
+            elif start_date == datetime.now() + timedelta(days=1):
+                to_print += "Tommorow:\n"
+            else:
+                to_print += start_date.strftime("%A") + ":\n"
+            if start_date == end_date:
+                return to_print
+            start_date = start_date + timedelta(days=1)
+

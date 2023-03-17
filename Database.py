@@ -30,9 +30,9 @@ class Database:
                            f'VALUES ("{name}", "{start_date}", "{end_date}")')
         self.__con.commit()
 
-    def printAll(self):
+    def fetch_all(self):
         self.__cur.execute('SELECT * FROM reservations ')
-        print(self.__cur.fetchall())
+        return self.__cur.fetchall()
 
     def quit(self):
         self.__con.commit()

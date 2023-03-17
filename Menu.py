@@ -42,6 +42,8 @@ class Menu:
                 print("When would you like to book? {DD.MM.YYYY HH:MM}")
             case DataType.DateCancel:
                 print("When is your reservation? {DD.MM.YYYY HH:MM}")
+            case DataType.DaysToPrint:
+                print("Please enter start and end date {DD.MM.YYYY DD.MM.YYYY} ")
         return input()
 
     @staticmethod
@@ -55,6 +57,8 @@ class Menu:
                 print(f"User has more than {Macros.max_reservations_num} reservations already this week")
             case AlertType.InvalidDate:
                 print("Entered invalid date format, it should be {DD.MM.YYYY HH:MM}")
+            case AlertType.InvalidDateShort:
+                print("Entered invalid date format, it should be {DD.MM.YYYY DD.MM.YYYY}")
             case AlertType.DayFull:
                 print("Given day is full, enter new date")
             case AlertType.DateFromThePast:

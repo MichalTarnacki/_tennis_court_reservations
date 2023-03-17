@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class AlertType:
+    InvalidDateShort = 13
     CancelSuccessful = 11
     DayFull = 0
     InvalidName = 1
