@@ -1,3 +1,4 @@
+import csv
 import time
 from datetime import datetime, timedelta
 
@@ -35,8 +36,13 @@ class Application:
         return True if re.compile('^([A-Za-z]+\\s[A-Za-z]+)$').match(name) is not None else False
 
     @staticmethod
+    def __validate_filename(name):
+        return True if re.compile('^[\w\-. ]+$').match(name) is not None else False
+
+    @staticmethod
     def __validate_two_dates(date_string):
         return True if re.compile('^([0-9.]+\\s[0-9.]+)$').match(date_string) is not None else False
+
     @staticmethod
     def __validate_date(date):
         try:
@@ -57,28 +63,30 @@ class Application:
                                   hour=time.strptime(Macros.end_hour, Macros.time_format).tm_hour)
 
         if close_time < date + timedelta(minutes=Macros.minute_interval) \
-           or date < open_time:
+                or date < open_time:
             return
 
         for i in dates:
             if datetime.strptime(i[0], Macros.datetime_format) <= date < datetime.strptime(i[1], Macros.datetime_format) \
-                    or datetime.strptime(i[0], Macros.datetime_format) < date + timedelta(minutes=Macros.minute_interval) \
+                    or datetime.strptime(i[0], Macros.datetime_format) < date + timedelta(
+                minutes=Macros.minute_interval) \
                     < datetime.strptime(i[1], Macros.datetime_format):
                 return False
         return True
 
     def __find_new_hour(self, date):
-        if date.date() == datetime.now().date():
-            date = date.replace(minute=datetime.now().minute,
-                                hour=datetime.now().hour) + timedelta(minutes=Macros.minute_delay)
-        else:
-            date = date.replace(minute=time.strptime(Macros.start_hour, Macros.time_format).tm_min,
-                                hour=time.strptime(Macros.start_hour, Macros.time_format).tm_hour)
+        # if date.date() == datetime.now().date():
+        #     date = date.replace(minute=datetime.now().minute,
+        #                         hour=datetime.now().hour) + timedelta(minutes=Macros.minute_delay)
+        # else:
+        date = date.replace(minute=time.strptime(Macros.start_hour, Macros.time_format).tm_min,
+                            hour=time.strptime(Macros.start_hour, Macros.time_format).tm_hour)
         close_time = date.replace(minute=time.strptime(Macros.end_hour, Macros.time_format).tm_min,
                                   hour=time.strptime(Macros.end_hour, Macros.time_format).tm_hour)
         while date + timedelta(minutes=Macros.minute_interval) < close_time:
-            if self.__check_if_date_is_available(date):
-                return date
+            if date > datetime.now():
+                if self.__check_if_date_is_available(date):
+                    return date
             date = date + timedelta(minutes=Macros.minute_interval)
         return None
 
@@ -153,8 +161,8 @@ class Application:
                 response = int(response)
                 if 1 <= response <= periods:
                     return response
-                elif response in [i*Macros.minute_interval for i in range(1, Macros.max_periods+1)]:
-                    return response/Macros.minute_interval
+                elif response in [i * Macros.minute_interval for i in range(1, Macros.max_periods + 1)]:
+                    return response / Macros.minute_interval
                 else:
                     Menu.alert(AlertType.NumberOutOfRange)
             except (Exception,):
@@ -172,7 +180,8 @@ class Application:
         if not duration:
             return
         start_date = datetime.strftime(date, Macros.datetime_format)
-        end_date = datetime.strftime(date + timedelta(minutes=duration * Macros.minute_interval), Macros.datetime_format)
+        end_date = datetime.strftime(date + timedelta(minutes=duration * Macros.minute_interval),
+                                     Macros.datetime_format)
         self.__db.insert(name, start_date, end_date)
         Menu.success_message(name, date.strftime(Macros.datetime_format), int(duration * Macros.minute_interval))
 
@@ -198,7 +207,7 @@ class Application:
                         else:
                             return
 
-    def __print_schedule(self):
+    def __get_time_interval(self):
         while True:
             next_days = Menu.gather_data(DataType.DaysToPrint)
             if self.__validate_two_dates(next_days):
@@ -211,28 +220,91 @@ class Application:
                     Menu.alert(AlertType.InvalidDateShort)
             else:
                 Menu.alert(AlertType.InvalidDateShort)
+        return start_date, end_date
+
+    def __print_schedule(self):
+        start_date, end_date = self.__get_time_interval()
         print(self.__str__(start_date, end_date))
+        time.sleep(5)
 
     def __save_schedule(self):
-        self.__db.printAll()
-        time.sleep(3)
-        pass
+        start_date, end_date = self.__get_time_interval()
+        while True:
+            fformat = Menu.gather_data(DataType.FileFormat)
+            if fformat in ('CSV', 'csv', 'JSON', 'json'):
+                break
+        while True:
+            name = Menu.gather_data(DataType.FileName)
+            if self.__validate_filename(name):
+                break
+        if fformat.lower() == 'csv':
+            self.__create_csv(start_date, end_date, name)
+        else:
+            self.__create_json(start_date, end_date, name)
 
     def __exit(self):
         pass
 
+    def __get_sorted_reservations(self, start_date, end_date):
+        reservations = self.__db.fetch_all()
+        reservations = self.__change_reservations_to_datetime(reservations)
+        reservations = list(filter(lambda x: start_date <= x[1] <= end_date, reservations))
+        reservations.sort(key=lambda a: a[1])
+        return reservations
+
+    @staticmethod
+    def __change_reservations_to_datetime(reservations):
+        return [(i[0], datetime.strptime(i[1], Macros.datetime_format), datetime.strptime(i[2], Macros.datetime_format))
+                for i in reservations]
+
+    @staticmethod
+    def __change_reservations_to_string(reservations):
+        return [(i[0], datetime.strftime(i[1], Macros.datetime_format), datetime.strftime(i[2], Macros.datetime_format))
+                for i in reservations]
+
     def __str__(self, start_date=datetime.now(), end_date=datetime.now() + timedelta(days=3)):
         to_print = ""
-        reservations = self.__db.fetch_all()
-
+        reservations = self.__get_sorted_reservations(start_date, end_date)
         while True:
-            if start_date == datetime.now():
+            if start_date.date() == datetime.now().date():
                 to_print += "Today:\n"
-            elif start_date == datetime.now() + timedelta(days=1):
+            elif start_date.date() == datetime.now().date() + timedelta(days=1):
                 to_print += "Tommorow:\n"
             else:
                 to_print += start_date.strftime("%A") + ":\n"
+            found = False
+            for i in reservations:
+                if i[1].date() == start_date.date():
+                    found = True
+                    to_print += f"* {i[0]} {i[1].strftime(Macros.datetime_format)} - {i[2].strftime(Macros.datetime_format)}\n"
+            if not found:
+                to_print += "No Reservations\n"
+            to_print += '\n'
             if start_date == end_date:
                 return to_print
             start_date = start_date + timedelta(days=1)
 
+    def __create_csv(self, start_date, end_date, name):
+        reservations = self.__get_sorted_reservations(start_date, end_date)
+        reservations = self.__change_reservations_to_string(reservations)
+        fields = ['name', 'start_time', 'end_time']
+
+        with open(name, 'w') as f:
+            # using csv.writer method from CSV package
+            write = csv.writer(f)
+
+            write.writerow(fields)
+            write.writerows(reservations)
+
+        f = open(name, "rt")
+        data = f.read()
+        data = data.replace(',', ', ')
+        f.close()
+        f = open(name, "wt")
+        f.write(data)
+        f.close()
+
+    def __create_json(self, start_date, end_date, name):
+        reservations = self.__get_sorted_reservations(start_date, end_date)
+        
+        pass

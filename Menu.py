@@ -44,6 +44,10 @@ class Menu:
                 print("When is your reservation? {DD.MM.YYYY HH:MM}")
             case DataType.DaysToPrint:
                 print("Please enter start and end date {DD.MM.YYYY DD.MM.YYYY} ")
+            case DataType.FileFormat:
+                print("Save as json or csv?")
+            case DataType.FileName:
+                print("Please enter a file name")
         return input()
 
     @staticmethod
