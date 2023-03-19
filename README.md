@@ -1,9 +1,9 @@
 # _tennis_court_reservations
 >author: Michał Tarnacki
 
-**In this program you can make, cancel, print and save reservations.**
+**In this program an user can make, cancel, print and save reservations.**
 
-Main menu provides user following options:
+Let's us take a look at the main menu:
 
 	What do you want to do:
 	1.Make a reservation
@@ -12,7 +12,7 @@ Main menu provides user following options:
 	4.Save schedule to a file
 	5.Exit
 
-He can either prompt an option number or enter command.
+It provides several options. To choose one of them, user can either prompt a command or enter an option number.
 To make UI more user friendly this rule also applies to other prompts.
 
 **Lets enter then "Make a reservation"**
@@ -34,3 +34,8 @@ For example you can set different time intervals or increase their number. Keep 
 **Due to lack of time there are only several unit tests, but I did not encounter any bugs which does not mean they are not any.**
 
 Every input is validated so user should not do anything leading to error.
+
+**Notes**
+
+I assume that user can make a reservation at time like 9:37 as long as it is during opening hours (set in Macros file).
+To achieve data persistence the the schedule is kept in SQLite database.
