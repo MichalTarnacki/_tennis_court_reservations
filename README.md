@@ -1,4 +1,5 @@
 # _tennis_court_reservations
+>author: Michał Tarnacki
 
 **In this program you can make, cancel, print and save reservations.**
 
