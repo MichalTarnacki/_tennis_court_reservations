@@ -2,6 +2,10 @@ from enum import Enum
 
 
 class AlertType:
+    SaveSuccessful = 17
+    WrongDateOrder = 16
+    InvalidFormat = 15
+    FileAlreadyExists = 14
     InvalidDateShort = 13
     CancelSuccessful = 11
     DayFull = 0

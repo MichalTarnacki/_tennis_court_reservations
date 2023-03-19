@@ -2,12 +2,13 @@ import sqlite3
 
 
 class Database:
+    """Class managing application database"""
     def __init__(self, path):
         self.__con = sqlite3.connect(path)
         self.__cur = self.__con.cursor()
-        self.__manage()
+        self._manage()
 
-    def __manage(self):
+    def _manage(self):
         self.__cur.execute("CREATE TABLE IF NOT EXISTS reservations ("
                            "pname VARCHAR, "
                            "start_time TEXT, "

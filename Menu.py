@@ -7,6 +7,7 @@ from DataType import DataType
 
 
 class Menu:
+    """Class separating UI from application"""
     def __init__(self):
         pass
 
@@ -28,14 +29,15 @@ class Menu:
                 return ActionOption.Print
             case "4" | "Save schedule to a file":
                 return ActionOption.Save
-            case "5" | "Exit":
+            case "5" | "Exit" | "exit":
                 return ActionOption.Exit
         return None
 
     @staticmethod
-    def gather_data(type):
-        Macros.clear_screen()
-        match type:
+    def gather_data(alert_type, clear=True):
+        if clear:
+            Macros.clear_screen()
+        match alert_type:
             case DataType.Name:
                 print("What's your Name?")
             case DataType.Date:
@@ -48,6 +50,8 @@ class Menu:
                 print("Save as json or csv?")
             case DataType.FileName:
                 print("Please enter a file name")
+            case DataType.AnyInput:
+                print("Enter any character to continue")
         return input()
 
     @staticmethod
@@ -64,11 +68,13 @@ class Menu:
             case AlertType.InvalidDateShort:
                 print("Entered invalid date format, it should be {DD.MM.YYYY DD.MM.YYYY}")
             case AlertType.DayFull:
-                print("Given day is full, enter new date")
+                print("Given day is full already, please enter new date")
             case AlertType.DateFromThePast:
-                print(f"Entered past date, please select some in interval at {float(Macros.minute_delay/60)} hour{'s' if Macros.minute_delay/60 > 1 else ''}")
+                print(
+                    f"Entered past date, please select some in gap at least {float(Macros.minute_delay / 60)} hour{'s' if Macros.minute_delay / 60 > 1 else ''}")
             case AlertType.DateTooClose:
-                print(f"Entered too close date, please select some in interval at least {float(Macros.minute_delay/60)} hour{'s' if Macros.minute_delay/60 > 1 else ''}")
+                print(
+                    f"Entered too close date, please select some in gap at least {float(Macros.minute_delay / 60)} hour{'s' if Macros.minute_delay / 60 > 1 else ''}")
             case AlertType.NotANumber:
                 print("Please enter a number")
             case AlertType.NumberOutOfRange:
@@ -77,8 +83,16 @@ class Menu:
                 print("Cannot cancel reservation, date too close")
             case AlertType.CancelSuccessful:
                 print("Successfully canceled")
-
+            case AlertType.FileAlreadyExists:
+                print("File already exists, please select another name")
+            case AlertType.FileAlreadyExists:
+                print("Please enter one of following format")
+            case AlertType.WrongDateOrder:
+                print("End date is before start date")
+            case AlertType.SaveSuccessful:
+                print("Save successful")
         time.sleep(3)
+        Macros.flush()
 
     @staticmethod
     def unavailable_date(new_hour):
@@ -96,8 +110,8 @@ class Menu:
     def gather_duration(periods):
         Macros.clear_screen()
         print("How long would you like to book court?")
-        for i in range(1,periods+1):
-            print(f"{i}) {i*Macros.minute_interval} minutes")
+        for i in range(1, periods + 1):
+            print(f"{i}) {i * Macros.minute_interval} minutes")
         return input()
 
     @staticmethod
@@ -116,3 +130,9 @@ class Menu:
             case 'no':
                 return False
         return None
+
+    @staticmethod
+    def print_schedule(app, start_date, end_date):
+        Macros.clear_screen()
+        print(app.__str__(start_date, end_date))
+        Menu.gather_data(DataType.AnyInput, clear=False)

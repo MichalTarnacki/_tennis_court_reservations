@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class DataType(Enum):
+    AnyInput = 9
     FileName = 8
     FileFormat = 7
     DaysToPrint = 6
