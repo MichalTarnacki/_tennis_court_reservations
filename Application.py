@@ -14,7 +14,7 @@ import json
 
 
 class Application:
-    """Class containing all backend logic"""
+    """Class containing all of backend logic"""
     def __init__(self, test=False):
         self._db = Database(Macros.database_path)
         if not test:
@@ -149,7 +149,7 @@ class Application:
 
     def _find_available_periods(self, date):
         available_periods = 1
-        for i in (1, Macros.max_periods):
+        for i in range(1, Macros.max_periods):
             if self._check_if_date_is_available(date + timedelta(minutes=Macros.minute_interval * i)):
                 available_periods += 1
             else:
