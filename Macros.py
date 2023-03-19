@@ -29,8 +29,8 @@ def flush():
 
 
 max_reservations_num = 2
-database_path = "/Users/michal/Documents/sample.db"
-test_database_path = "/Users/michal/Documents/test.db"
+database_path = "sample.db"
+test_database_path = "test.db"
 datetime_format = '%d.%m.%Y %H:%M'
 date_format = '%d.%m.%Y'
 weekdate_format = '%d.%m'
@@ -41,4 +41,4 @@ end_hour = '18:00'
 time_format = '%H:%M'
 minute_delay = 60
 exit = ["exit", "Exit"]
-default_path = "/Users/michal/Documents/"
+default_path = ""
